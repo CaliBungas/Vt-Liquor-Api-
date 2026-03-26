@@ -40,7 +40,7 @@ async function start() {
   } catch (err) {
     console.warn('Database not available — API routes will fail but front-end is still served.');
   }
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`VT Liquor API running on port ${PORT}`);
   });
 }
