@@ -23,9 +23,15 @@ const { splitCart } = require('../utils/splitCart');
 const { logTransaction } = require('../db/logTransaction');
 
 const router = express.Router();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
 
 router.post('/checkout', async (req, res) => {
+  if (!stripe) {
+    return res.status(503).json({ error: 'Stripe is not configured. Add STRIPE_SECRET_KEY to environment variables.' });
+  }
+
   const { items, paymentMethodId, retailerId } = req.body;
 
   if (!items || !Array.isArray(items) || items.length === 0) {

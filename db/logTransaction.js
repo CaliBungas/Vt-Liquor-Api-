@@ -9,16 +9,23 @@
 
 const { Pool } = require('pg');
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+let pool = null;
+
+function getPool() {
+  if (!pool && process.env.DATABASE_URL) {
+    pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  }
+  return pool;
+}
 
 /**
  * Creates the transactions table if it doesn't exist.
  * Call once at server startup.
  */
 async function initDb() {
-  await pool.query(`
+  const db = getPool();
+  if (!db) return;
+  await db.query(`
     CREATE TABLE IF NOT EXISTS transactions (
       id              SERIAL PRIMARY KEY,
       retailer_id     VARCHAR(100) NOT NULL,
@@ -48,7 +55,9 @@ async function initDb() {
  * @param {string} txn.status           - "success" | "partial_refund" | "failed"
  */
 async function logTransaction(txn) {
-  await pool.query(
+  const db = getPool();
+  if (!db) return;
+  await db.query(
     `INSERT INTO transactions
        (retailer_id, regular_charge_id, liquor_charge_id,
         regular_amount, liquor_amount, regular_tax, liquor_tax, status)
@@ -66,4 +75,4 @@ async function logTransaction(txn) {
   );
 }
 
-module.exports = { initDb, logTransaction, pool };
+module.exports = { initDb, logTransaction, getPool };
